@@ -11,6 +11,7 @@ import (
 // POST /realms/${realmId}/authentication/flows/${flowAlias}/executions/execution
 type authenticationExecutionCreate struct {
 	Provider string `json:"provider"` //authenticator of the execution
+	Priority int    `json:"priority,omitempty"`
 }
 
 type authenticationExecutionRequirementUpdate struct {
@@ -31,7 +32,7 @@ type AuthenticationExecution struct {
 	AuthenticationFlow   bool   `json:"authenticationFlow"`
 	FlowId               string `json:"flowId"`
 	ParentFlowId         string `json:"parentFlow"`
-	Priority             int    `json:"priority"`
+	Priority             int    `json:"priority,omitempty"`
 	Requirement          string `json:"requirement"`
 }
 
@@ -48,6 +49,7 @@ type AuthenticationExecutionInfo struct {
 	Index                int    `json:"index"`
 	Level                int    `json:"level"`
 	ProviderId           string `json:"providerId"`
+	Priority             int    `json:"priority,omitempty"`
 	Requirement          string `json:"requirement"`
 	Priority             int    `json:"priority"`
 }
@@ -121,7 +123,14 @@ func (keycloakClient *KeycloakClient) GetAuthenticationExecutionInfoFromProvider
 }
 
 func (keycloakClient *KeycloakClient) NewAuthenticationExecution(ctx context.Context, execution *AuthenticationExecution) error {
-	_, location, err := keycloakClient.post(ctx, fmt.Sprintf("/realms/%s/authentication/flows/%s/executions/execution", execution.RealmId, execution.ParentFlowAlias), &authenticationExecutionCreate{Provider: execution.Authenticator})
+	executionCreate := &authenticationExecutionCreate{
+		Provider: execution.Authenticator,
+	}
+	if prioritySupported, _ := keycloakClient.VersionIsGreaterThanOrEqualTo(ctx, Version_25); prioritySupported {
+		executionCreate.Priority = execution.Priority
+	}
+	_, location, err := keycloakClient.post(ctx, fmt.Sprintf("/realms/%s/authentication/flows/%s/executions/execution", execution.RealmId, execution.ParentFlowAlias), executionCreate)
+
 	if err != nil {
 		return err
 	}
@@ -158,6 +167,9 @@ func (keycloakClient *KeycloakClient) UpdateAuthenticationExecution(ctx context.
 		Requirement:     execution.Requirement,
 		Priority:        execution.Priority,
 	}
+	if prioritySupported, _ := keycloakClient.VersionIsGreaterThanOrEqualTo(ctx, Version_25); prioritySupported {
+		authenticationExecutionUpdateRequirement.Priority = execution.Priority
+	}
 	return keycloakClient.UpdateAuthenticationExecutionRequirement(ctx, authenticationExecutionUpdateRequirement)
 }
 
@@ -172,21 +184,5 @@ func (keycloakClient *KeycloakClient) DeleteAuthenticationExecution(ctx context.
 		return keycloakClient.delete(ctx, fmt.Sprintf("/realms/%s/authentication/executions/%s", realmId, id), nil)
 	}
 
-	return nil
-}
-
-func (keycloakClient *KeycloakClient) RaiseAuthenticationExecutionPriority(ctx context.Context, realmId, id string) error {
-	_, _, err := keycloakClient.post(ctx, fmt.Sprintf("/realms/%s/authentication/executions/%s/raise-priority", realmId, id), nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (keycloakClient *KeycloakClient) LowerAuthenticationExecutionPriority(ctx context.Context, realmId, id string) error {
-	_, _, err := keycloakClient.post(ctx, fmt.Sprintf("/realms/%s/authentication/executions/%s/lower-priority", realmId, id), nil)
-	if err != nil {
-		return err
-	}
 	return nil
 }
