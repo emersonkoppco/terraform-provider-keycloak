@@ -41,6 +41,9 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          GPG_TTY=$(tty)
+          export GPG_TTY
 
       - name: Get tag name
         id: get_tag_name
