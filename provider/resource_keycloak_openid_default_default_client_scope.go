@@ -13,7 +13,6 @@ func resourceKeycloakOpenidDefaultDefaultClientScopes() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
 		ReadContext:   resourceKeycloakOpenidDefaultDefaultClientScopesRead,
-		DeleteContext: resourceKeycloakOpenidDefaultDefaultClientScopeDelete,
 		UpdateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
 		Schema: map[string]*schema.Schema{
 			"realm_id": {
@@ -109,13 +108,4 @@ func attachNewDefaultScopes(ctx context.Context, keycloakClient *keycloak.Keyclo
 		}
 	}
 	return nil
-}
-
-func resourceKeycloakOpenidDefaultDefaultClientScopeDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	keycloakClient := meta.(*keycloak.KeycloakClient)
-
-	realmId := data.Get("realm_id").(string)
-	clientScopeId := data.Get("client_scope_id").(string)
-
-	return diag.FromErr(keycloakClient.DeleteOpenidRealmDefaultDefaultClientScope(ctx, realmId, clientScopeId))
 }
