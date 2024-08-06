@@ -13,9 +13,7 @@ jobs:
     strategy:
       matrix:
         keycloak-version:
-          - '21.0.1'
-          - '20.0.5'
-          - '19.0.2'
+          - '25.0.2'
       fail-fast: false
     concurrency:
       group: docker-build-${{ matrix.keycloak-version }}

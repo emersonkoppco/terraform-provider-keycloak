@@ -67,6 +67,13 @@ This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for de
 
 After cloning the repository, you can build the project by running `make build`.
 
+### Deploy locally
+
+To test the plugin locally, run `make deploy-local` and change the source and provider version as per the instructions
+printed by the command. This will make the plugin available for terraform commands.
+
+After finishing testing, run `make clean-local` to remove the local plugin.
+
 ### Local Environment
 
 You can spin up a local developer environment via [Docker Compose](https://docs.docker.com/compose/) by running `make local`.

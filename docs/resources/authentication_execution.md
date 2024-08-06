@@ -31,6 +31,7 @@ resource "keycloak_authentication_execution" "execution_one" {
   authenticator     = "auth-cookie"
   requirement       = "ALTERNATIVE"
   priority          = 10 # Starting from Keycloak 25
+  flow_id           = "${keycloak_authentication_flow.flow.id}"
 }
 
 # second execution
@@ -40,6 +41,7 @@ resource "keycloak_authentication_execution" "execution_two" {
   authenticator     = "identity-provider-redirector"
   requirement       = "ALTERNATIVE"
   priority          = 20 # Starting from Keycloak 25
+  flow_id           = "${keycloak_authentication_flow.flow.id}"
 
   # Workaround for older Keycloak versions (Keycloak 24 and older)
   depends_on = [
@@ -52,9 +54,10 @@ resource "keycloak_authentication_execution" "execution_two" {
 
 - `realm_id` - (Required) The realm the authentication execution exists in.
 - `parent_flow_alias` - (Required) The alias of the flow this execution is attached to.
-- `authenticator` - (Required) The name of the authenticator. This can be found by experimenting with the GUI and looking at HTTP requests within the network tab of your browser's development tools.
+- `authenticator` - (Optional) The name of the authenticator. This can be found by experimenting with the GUI and looking at HTTP requests within the network tab of your browser's development tools.
 - `requirement`- (Optional) The requirement setting, which can be one of `REQUIRED`, `ALTERNATIVE`, `OPTIONAL`, `CONDITIONAL`, or `DISABLED`. Defaults to `DISABLED`.
 - `priority`- (Optional) The authenticator priority, the lower the value the higher it will be placed in the parent flow. This option is supported only by Keycloak 25 and onwards.
+- `flow_id`- (Optional) The id of the flow this execution executes.
 
 ## Import
 

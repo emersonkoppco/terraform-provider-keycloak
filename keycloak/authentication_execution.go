@@ -10,8 +10,9 @@ import (
 // other fields can be provided to the API but they are ignored
 // POST /realms/${realmId}/authentication/flows/${flowAlias}/executions/execution
 type authenticationExecutionCreate struct {
-	Provider string `json:"provider"` //authenticator of the execution
+	Provider string `json:"provider"` // authenticator of the execution
 	Priority int    `json:"priority,omitempty"`
+	FlowId   string `json:"flowId,omitempty"`
 }
 
 type authenticationExecutionRequirementUpdate struct {
@@ -27,7 +28,7 @@ type AuthenticationExecution struct {
 	Id                   string `json:"id"`
 	RealmId              string `json:"-"`
 	ParentFlowAlias      string `json:"-"`
-	Authenticator        string `json:"authenticator"` //can be any authenticator from GET realms/{realm}/authentication/authenticator-providers OR GET realms/{realm}/authentication/client-authenticator-providers OR GET realms/{realm}/authentication/form-action-providers
+	Authenticator        string `json:"authenticator"` // can be any authenticator from GET realms/{realm}/authentication/authenticator-providers OR GET realms/{realm}/authentication/client-authenticator-providers OR GET realms/{realm}/authentication/form-action-providers
 	AuthenticationConfig string `json:"authenticationConfig"`
 	AuthenticationFlow   bool   `json:"authenticationFlow"`
 	FlowId               string `json:"flowId"`
@@ -124,10 +125,12 @@ func (keycloakClient *KeycloakClient) GetAuthenticationExecutionInfoFromProvider
 func (keycloakClient *KeycloakClient) NewAuthenticationExecution(ctx context.Context, execution *AuthenticationExecution) error {
 	executionCreate := &authenticationExecutionCreate{
 		Provider: execution.Authenticator,
+		FlowId:   execution.FlowId,
 	}
 	if prioritySupported, _ := keycloakClient.VersionIsGreaterThanOrEqualTo(ctx, Version_25); prioritySupported {
 		executionCreate.Priority = execution.Priority
 	}
+
 	_, location, err := keycloakClient.post(ctx, fmt.Sprintf("/realms/%s/authentication/flows/%s/executions/execution", execution.RealmId, execution.ParentFlowAlias), executionCreate)
 
 	if err != nil {

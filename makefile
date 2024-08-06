@@ -4,10 +4,22 @@ GOARCH?=arm64
 
 MAKEFLAGS += --silent
 
-VERSION=$$(git describe --tags)
+TAG := $$(git describe --tags)
+VERSION := $(shell echo $(TAG) | cut -c2-)
 
 build:
-	CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o terraform-provider-keycloak_$(VERSION)
+	echo "TAG=$(TAG)"
+	echo "VERSION=$(VERSION)"
+	CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=$(TAG)" -o terraform-provider-keycloak_$(TAG)
+
+deploy-local: build
+	rm -rf ~/.terraform.d/plugins/terraform.local/emersonkoppco/keycloak/$(VERSION)/$(GOOS)_$(GOARCH)
+	mkdir -p ~/.terraform.d/plugins/terraform.local/emersonkoppco/keycloak/$(VERSION)/$(GOOS)_$(GOARCH)
+	mv terraform-provider-keycloak_$(TAG) ~/.terraform.d/plugins/terraform.local/emersonkoppco/keycloak/$(VERSION)/$(GOOS)_$(GOARCH)
+	echo "Use provider = \"terraform.local/emersonkoppco/keycloak\" and version = \"$(VERSION)\" to test"
+
+clean-local:
+	rm -rf ~/.terraform.d/plugins/terraform.local/emersonkoppco/keycloak
 
 build-example: build
 	mkdir -p example/.terraform/plugins/terraform.local/mrparkers/keycloak/4.0.0/$(GOOS)_$(GOARCH)

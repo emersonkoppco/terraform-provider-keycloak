@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -34,18 +35,23 @@ func resourceKeycloakAuthenticationExecution() *schema.Resource {
 			},
 			"authenticator": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"requirement": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"REQUIRED", "ALTERNATIVE", "OPTIONAL", "CONDITIONAL", "DISABLED"}, false), //OPTIONAL is removed from 8.0.0 onwards
+				ValidateFunc: validation.StringInSlice([]string{"REQUIRED", "ALTERNATIVE", "OPTIONAL", "CONDITIONAL", "DISABLED"}, false), // OPTIONAL is removed from 8.0.0 onwards
 				Default:      "DISABLED",
 			},
 			"priority": {
 				Type:     schema.TypeInt,
 				Optional: true,
+			},
+			"flow_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 		},
 	}
@@ -59,6 +65,7 @@ func mapFromDataToAuthenticationExecution(data *schema.ResourceData) *keycloak.A
 		Authenticator:   data.Get("authenticator").(string),
 		Requirement:     data.Get("requirement").(string),
 		Priority:        data.Get("priority").(int),
+		FlowId:          data.Get("flow_id").(string),
 	}
 
 	return authenticationExecution
@@ -74,6 +81,7 @@ func mapFromAuthenticationExecutionToData(keycloakClient *keycloak.KeycloakClien
 	if prioritySupported, _ := keycloakClient.VersionIsGreaterThanOrEqualTo(ctx, keycloak.Version_25); prioritySupported {
 		data.Set("priority", authenticationExecution.Priority)
 	}
+	data.Set("flow_id", authenticationExecution.FlowId)
 }
 
 func mapFromAuthenticationExecutionInfoToData(keycloakClient *keycloak.KeycloakClient, ctx context.Context, data *schema.ResourceData, authenticationExecutionInfo *keycloak.AuthenticationExecutionInfo) {
@@ -84,6 +92,7 @@ func mapFromAuthenticationExecutionInfoToData(keycloakClient *keycloak.KeycloakC
 	if prioritySupported, _ := keycloakClient.VersionIsGreaterThanOrEqualTo(ctx, keycloak.Version_25); prioritySupported {
 		data.Set("priority", authenticationExecutionInfo.Priority)
 	}
+	data.Set("flow_id", authenticationExecutionInfo.FlowId)
 }
 
 func resourceKeycloakAuthenticationExecutionCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
