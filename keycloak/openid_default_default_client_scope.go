@@ -5,15 +5,15 @@ import (
 	"fmt"
 )
 
-func (keycloakClient *KeycloakClient) GetOpenidRealmDefaultDefaultClientScopes(ctx context.Context, realmId string) (*[]OpenidClientScope, error) {
-	var clientScopes []OpenidClientScope
+func (keycloakClient *KeycloakClient) GetOpenidRealmDefaultDefaultClientScopes(ctx context.Context, realmId string) ([]*OpenidClientScope, error) {
+	var clientScopes []*OpenidClientScope
 
 	err := keycloakClient.get(ctx, fmt.Sprintf("/realms/%s/default-default-client-scopes", realmId), &clientScopes, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return &clientScopes, nil
+	return clientScopes, nil
 }
 
 func (keycloakClient *KeycloakClient) GetOpenidRealmDefaultDefaultClientScope(ctx context.Context, realmId, clientScopeId string) (*OpenidClientScope, error) {

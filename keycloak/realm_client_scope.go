@@ -95,3 +95,4 @@ func (keycloakClient *KeycloakClient) UnmarkClientScopesAsRealmOptional(ctx cont
 		return keycloakClient.unmarkClientScopeAs(ctx, realmId, scopeId, "optional")
 	})
 }
+}
