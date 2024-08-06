@@ -22,10 +22,12 @@ func resourceKeycloakOpenidDefaultDefaultClientScope() *schema.Resource {
 			"client_scope_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"client_scope_name": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 		},
 	}
