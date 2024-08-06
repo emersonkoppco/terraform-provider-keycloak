@@ -1,0 +1,268 @@
+[
+	{
+		"id": "bfe1d894-677a-4871-9f43-af5cedad0102",
+		"alias": "browser",
+		"description": "browser based authentication",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticator": "auth-cookie",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "auth-spnego",
+				"authenticatorFlow": false,
+				"requirement": "DISABLED",
+				"priority": 20,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "identity-provider-redirector",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 25,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticatorFlow": true,
+				"requirement": "ALTERNATIVE",
+				"priority": 30,
+				"autheticatorFlow": true,
+				"flowAlias": "forms",
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "6b54e618-8b8d-47d6-88cb-351fc0383a49",
+		"alias": "direct grant",
+		"description": "OpenID Connect Resource Owner Grant",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticator": "direct-grant-validate-username",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "direct-grant-validate-password",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 20,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticatorFlow": true,
+				"requirement": "CONDITIONAL",
+				"priority": 30,
+				"autheticatorFlow": true,
+				"flowAlias": "Direct Grant - Conditional OTP",
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "08593cd9-123b-4c77-93d8-7faa6a452eb3",
+		"alias": "registration",
+		"description": "registration flow",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticator": "registration-page-form",
+				"authenticatorFlow": true,
+				"requirement": "REQUIRED",
+				"priority": 10,
+				"autheticatorFlow": true,
+				"flowAlias": "registration form",
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "b58bbe48-1b9b-41ed-881c-576368403075",
+		"alias": "reset credentials",
+		"description": "Reset credentials for a user if they forgot their password or something",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticator": "reset-credentials-choose-user",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "reset-credential-email",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 20,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "reset-password",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 30,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticatorFlow": true,
+				"requirement": "CONDITIONAL",
+				"priority": 40,
+				"autheticatorFlow": true,
+				"flowAlias": "Reset - Conditional OTP",
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "cedcf9da-9aea-4872-80c2-526280b25c69",
+		"alias": "clients",
+		"description": "Base authentication for clients",
+		"providerId": "client-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticator": "client-secret",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "client-jwt",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 20,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "client-secret-jwt",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 30,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "client-x509",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 40,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "7dae4536-7689-49f7-a417-1eff62322032",
+		"alias": "first broker login",
+		"description": "Actions taken after first broker login with identity provider account, which is not yet linked to any Keycloak account",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticatorConfig": "review profile config",
+				"authenticator": "idp-review-profile",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticatorFlow": true,
+				"requirement": "REQUIRED",
+				"priority": 20,
+				"autheticatorFlow": true,
+				"flowAlias": "User creation or linking",
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "575b77d9-6d23-4fed-8581-43f9240e6f56",
+		"alias": "docker auth",
+		"description": "Used by Docker clients to authenticate against the IDP",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": true,
+		"authenticationExecutions": [
+			{
+				"authenticator": "docker-http-basic-authenticator",
+				"authenticatorFlow": false,
+				"requirement": "REQUIRED",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			}
+		]
+	},
+	{
+		"id": "4c9605de-b5fd-4754-acf5-aebf962002e5",
+		"alias": "browser-captcha",
+		"description": "browser based authentication",
+		"providerId": "basic-flow",
+		"topLevel": true,
+		"builtIn": false,
+		"authenticationExecutions": [
+			{
+				"authenticator": "auth-cookie",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 10,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "auth-spnego",
+				"authenticatorFlow": false,
+				"requirement": "DISABLED",
+				"priority": 20,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticator": "identity-provider-redirector",
+				"authenticatorFlow": false,
+				"requirement": "ALTERNATIVE",
+				"priority": 25,
+				"autheticatorFlow": false,
+				"userSetupAllowed": false
+			},
+			{
+				"authenticatorFlow": true,
+				"requirement": "ALTERNATIVE",
+				"priority": 30,
+				"autheticatorFlow": true,
+				"flowAlias": "browser-captcha forms",
+				"userSetupAllowed": false
+			}
+		]
+	}
+]

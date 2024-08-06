@@ -1,0 +1,125 @@
+[
+	{
+		"id": "98473dd1-04cd-49fe-a95d-8bbb8937d4c5",
+		"requirement": "ALTERNATIVE",
+		"displayName": "Cookie",
+		"requirementChoices": [
+			"REQUIRED",
+			"ALTERNATIVE",
+			"DISABLED"
+		],
+		"configurable": false,
+		"providerId": "auth-cookie",
+		"level": 0,
+		"index": 0,
+		"priority": 10
+	},
+	{
+		"id": "25c0d26d-4381-4d0d-88e7-ef4d4eec3037",
+		"requirement": "DISABLED",
+		"displayName": "Kerberos",
+		"requirementChoices": [
+			"DISABLED"
+		],
+		"configurable": false,
+		"providerId": "auth-spnego",
+		"level": 0,
+		"index": 1,
+		"priority": 20
+	},
+	{
+		"id": "2b1d2b19-6fae-4b8c-9d40-bb886f352238",
+		"requirement": "ALTERNATIVE",
+		"displayName": "Identity Provider Redirector",
+		"requirementChoices": [
+			"REQUIRED",
+			"ALTERNATIVE",
+			"DISABLED"
+		],
+		"configurable": true,
+		"providerId": "identity-provider-redirector",
+		"level": 0,
+		"index": 2,
+		"priority": 25
+	},
+	{
+		"id": "b582194a-5311-4836-9a15-221d3e059d00",
+		"requirement": "ALTERNATIVE",
+		"displayName": "browser-captcha forms",
+		"description": "Username, password, otp and other auth forms.",
+		"requirementChoices": [
+			"REQUIRED",
+			"ALTERNATIVE",
+			"DISABLED",
+			"CONDITIONAL"
+		],
+		"configurable": false,
+		"authenticationFlow": true,
+		"flowId": "945c676c-9a39-4800-9975-cadffd848f2b",
+		"level": 0,
+		"index": 3,
+		"priority": 30
+	},
+	{
+		"id": "a3d37ae9-739f-4662-9645-dc276cd921dd",
+		"requirement": "REQUIRED",
+		"displayName": "reCAPTCHA Authenticator",
+		"alias": "browser-captcha",
+		"requirementChoices": [
+			"REQUIRED"
+		],
+		"configurable": true,
+		"providerId": "recaptcha-authenticator",
+		"authenticationConfig": "839833bd-44f1-492a-b9a4-059712657121",
+		"level": 1,
+		"index": 0,
+		"priority": 10
+	},
+	{
+		"id": "1ab827a2-98b7-4a20-bcd7-09e6e494b59d",
+		"requirement": "CONDITIONAL",
+		"displayName": "browser-captcha Browser - Conditional OTP",
+		"description": "Flow to determine if the OTP is required for the authentication",
+		"requirementChoices": [
+			"REQUIRED",
+			"ALTERNATIVE",
+			"DISABLED",
+			"CONDITIONAL"
+		],
+		"configurable": false,
+		"authenticationFlow": true,
+		"flowId": "aa908b40-ad6c-4646-8a20-a1002d1cec52",
+		"level": 1,
+		"index": 1,
+		"priority": 21
+	},
+	{
+		"id": "18458222-e5ab-4973-aea9-1aeab2f1ae45",
+		"requirement": "REQUIRED",
+		"displayName": "Condition - user configured",
+		"requirementChoices": [
+			"REQUIRED",
+			"DISABLED"
+		],
+		"configurable": false,
+		"providerId": "conditional-user-configured",
+		"level": 2,
+		"index": 0,
+		"priority": 10
+	},
+	{
+		"id": "97fbf4d0-b035-4aa8-802c-ab073b4c7e31",
+		"requirement": "REQUIRED",
+		"displayName": "OTP Form",
+		"requirementChoices": [
+			"REQUIRED",
+			"ALTERNATIVE",
+			"DISABLED"
+		],
+		"configurable": false,
+		"providerId": "auth-otp-form",
+		"level": 2,
+		"index": 1,
+		"priority": 20
+	}
+]
