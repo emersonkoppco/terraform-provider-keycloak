@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,6 +17,9 @@ func resourceKeycloakOpenidDefaultDefaultClientScopes() *schema.Resource {
 		ReadContext:   resourceKeycloakOpenidDefaultDefaultClientScopesRead,
 		DeleteContext: resourceKeycloakOpenidDefaultDefaultClientScopeDelete,
 		UpdateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceKeycloakOpenidDefaultDefaultClientScopeImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"realm_id": {
 				Type:     schema.TypeString,
@@ -158,4 +162,25 @@ func resourceKeycloakOpenidDefaultDefaultClientScopeDelete(ctx context.Context, 
 		}
 	}
 	return nil
+}
+
+func resourceKeycloakOpenidDefaultDefaultClientScopeImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	keycloakClient := meta.(*keycloak.KeycloakClient)
+
+	_, err := keycloakClient.GetRealmDefaultClientScopes(ctx, data.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	err = data.Set("realm_id", data.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	diagnostics := resourceKeycloakOpenidDefaultDefaultClientScopesRead(ctx, data, meta)
+	if diagnostics.HasError() {
+		return nil, errors.New(diagnostics[0].Summary)
+	}
+
+	return []*schema.ResourceData{data}, nil
 }
