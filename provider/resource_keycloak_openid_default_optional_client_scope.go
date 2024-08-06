@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -78,14 +79,37 @@ func resourceKeycloakOpenidDefaultOptionalClientScopeReconcile(ctx context.Conte
 		return attachNewOptionalScopes(ctx, keycloakClient, realmId, tfOpenidDefaultOptionalScopes)
 	}
 
+	return waitForOptionalUpdates(ctx, keycloakClient, realmId, tfOpenidDefaultOptionalScopes, 5)
+}
+
+func waitForOptionalUpdates(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, scopes *schema.Set, times int) diag.Diagnostics {
+	if times == 0 {
+		return nil
+	}
+	keycloakOpenidDefaultOptionalScopes, err := keycloakClient.GetOpenidRealmDefaultOptionalClientScopes(ctx, realmId)
+	if err != nil {
+		if keycloak.ErrorIs404(err) {
+			return diag.FromErr(fmt.Errorf("validation error: realm with id %s does not exist", realmId))
+		}
+		return diag.FromErr(err)
+	}
+
+	if len(keycloakOpenidDefaultOptionalScopes) != scopes.Len() {
+		time.Sleep(1 * time.Second)
+		return waitForOptionalUpdates(ctx, keycloakClient, realmId, scopes, times-1)
+	}
+	for _, keycloakOpenidDefaultOptionalScope := range keycloakOpenidDefaultOptionalScopes {
+		if !scopes.Contains(keycloakOpenidDefaultOptionalScope.Name) {
+			time.Sleep(1 * time.Second)
+			return waitForOptionalUpdates(ctx, keycloakClient, realmId, scopes, times-1)
+		}
+	}
 	return nil
 }
 
 func detachDeletedOptionalScopes(ctx context.Context, keycloakOpenidDefaultOptionalScopes []*keycloak.OpenidClientScope, tfOpenidDefaultOptionalScopes *schema.Set, err error, keycloakClient *keycloak.KeycloakClient, realmId string) diag.Diagnostics {
 	for _, keycloakOpenidDefaultOptionalScope := range keycloakOpenidDefaultOptionalScopes {
-		if tfOpenidDefaultOptionalScopes.Contains(keycloakOpenidDefaultOptionalScope.Name) {
-			tfOpenidDefaultOptionalScopes.Remove(keycloakOpenidDefaultOptionalScope.Name)
-		} else {
+		if !tfOpenidDefaultOptionalScopes.Contains(keycloakOpenidDefaultOptionalScope.Name) {
 			err = keycloakClient.DeleteOpenidRealmDefaultOptionalClientScope(ctx, realmId, keycloakOpenidDefaultOptionalScope.Id)
 			if err != nil {
 				return diag.FromErr(err)
