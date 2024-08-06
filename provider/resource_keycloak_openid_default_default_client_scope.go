@@ -13,6 +13,7 @@ func resourceKeycloakOpenidDefaultDefaultClientScopes() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
 		ReadContext:   resourceKeycloakOpenidDefaultDefaultClientScopesRead,
+		DeleteContext: resourceKeycloakOpenidDefaultDefaultClientScopeDelete,
 		UpdateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
 		Schema: map[string]*schema.Schema{
 			"realm_id": {
@@ -105,6 +106,28 @@ func attachNewDefaultScopes(ctx context.Context, keycloakClient *keycloak.Keyclo
 			if err != nil {
 				return diag.FromErr(err)
 			}
+		}
+	}
+	return nil
+}
+
+func resourceKeycloakOpenidDefaultDefaultClientScopeDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	keycloakClient := meta.(*keycloak.KeycloakClient)
+
+	realmId := data.Get("realm_id").(string)
+
+	keycloakOpenidDefaultOptionalScopes, err := keycloakClient.GetOpenidRealmDefaultDefaultClientScopes(ctx, realmId)
+	if err != nil {
+		if keycloak.ErrorIs404(err) {
+			return diag.FromErr(fmt.Errorf("validation error: realm with id %s does not exist", realmId))
+		}
+		return diag.FromErr(err)
+	}
+
+	for _, keycloakClientScope := range keycloakOpenidDefaultOptionalScopes {
+		err = keycloakClient.DeleteOpenidRealmDefaultDefaultClientScope(ctx, realmId, keycloakClientScope.Id)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 	}
 	return nil
