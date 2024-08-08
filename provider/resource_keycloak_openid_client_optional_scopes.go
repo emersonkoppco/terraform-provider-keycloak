@@ -121,16 +121,28 @@ func resourceKeycloakOpenidClientOptionalScopesDelete(ctx context.Context, data 
 }
 
 func resourceKeycloakOpenidClientOptionalScopesImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	parts := strings.Split(data.Id(), "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("Invalid import. Supported import formats: {{realmId}}/{{openidClientId}}")
+	}
 	keycloakClient := meta.(*keycloak.KeycloakClient)
 
-	realmId := data.Get("realm_id").(string)
-	clientId := data.Get("client_id").(string)
+	realmId := parts[0]
+	clientId := parts[1]
 
 	keycloakOpenidClientOptionalScopes, err := keycloakClient.GetOpenidClientOptionalScopes(ctx, realmId, clientId)
 	if err != nil {
 		return nil, err
 	}
 
+	err = data.Set("realm_id", realmId)
+	if err != nil {
+		return nil, err
+	}
+	err = data.Set("client_id", clientId)
+	if err != nil {
+		return nil, err
+	}
 	var optionalScopes []string
 	for _, clientScope := range keycloakOpenidClientOptionalScopes {
 		optionalScopes = append(optionalScopes, clientScope.Name)

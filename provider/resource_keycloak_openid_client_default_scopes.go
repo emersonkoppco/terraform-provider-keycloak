@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -121,16 +122,28 @@ func resourceKeycloakOpenidClientDefaultScopesDelete(ctx context.Context, data *
 }
 
 func resourceKeycloakOpenidClientDefaultScopesImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	parts := strings.Split(data.Id(), "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("Invalid import. Supported import formats: {{realmId}}/{{openidClientId}}")
+	}
 	keycloakClient := meta.(*keycloak.KeycloakClient)
 
-	realmId := data.Get("realm_id").(string)
-	clientId := data.Get("client_id").(string)
+	realmId := parts[0]
+	clientId := parts[1]
 
 	keycloakOpenidClientDefaultScopes, err := keycloakClient.GetOpenidClientDefaultScopes(ctx, realmId, clientId)
 	if err != nil {
 		return nil, err
 	}
 
+	err = data.Set("realm_id", realmId)
+	if err != nil {
+		return nil, err
+	}
+	err = data.Set("client_id", clientId)
+	if err != nil {
+		return nil, err
+	}
 	var defaultScopes []string
 	for _, clientScope := range keycloakOpenidClientDefaultScopes {
 		defaultScopes = append(defaultScopes, clientScope.Name)
