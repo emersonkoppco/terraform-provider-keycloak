@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -15,6 +16,9 @@ func resourceKeycloakOpenidClientOptionalScopes() *schema.Resource {
 		ReadContext:   resourceKeycloakOpenidClientOptionalScopesRead,
 		DeleteContext: resourceKeycloakOpenidClientOptionalScopesDelete,
 		UpdateContext: resourceKeycloakOpenidClientOptionalScopesReconcile,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceKeycloakOpenidClientOptionalScopesImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"realm_id": {
 				Type:     schema.TypeString,
@@ -114,4 +118,32 @@ func resourceKeycloakOpenidClientOptionalScopesDelete(ctx context.Context, data 
 	optionalScopes := data.Get("optional_scopes").(*schema.Set)
 
 	return diag.FromErr(keycloakClient.DetachOpenidClientOptionalScopes(ctx, realmId, clientId, interfaceSliceToStringSlice(optionalScopes.List())))
+}
+
+func resourceKeycloakOpenidClientOptionalScopesImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	keycloakClient := meta.(*keycloak.KeycloakClient)
+
+	realmId := data.Get("realm_id").(string)
+	clientId := data.Get("client_id").(string)
+
+	keycloakOpenidClientOptionalScopes, err := keycloakClient.GetOpenidClientOptionalScopes(ctx, realmId, clientId)
+	if err != nil {
+		return nil, err
+	}
+
+	var optionalScopes []string
+	for _, clientScope := range keycloakOpenidClientOptionalScopes {
+		optionalScopes = append(optionalScopes, clientScope.Name)
+	}
+	err = data.Set("optional_scopes", optionalScopes)
+	if err != nil {
+		return nil, err
+	}
+
+	diagnostics := resourceKeycloakOpenidClientOptionalScopesRead(ctx, data, meta)
+	if diagnostics.HasError() {
+		return nil, errors.New(diagnostics[0].Summary)
+	}
+
+	return []*schema.ResourceData{data}, nil
 }
