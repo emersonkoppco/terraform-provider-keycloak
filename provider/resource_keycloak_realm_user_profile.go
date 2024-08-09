@@ -105,7 +105,6 @@ func resourceKeycloakRealmUserProfile() *schema.Resource {
 									"config": {
 										Type:     schema.TypeMap,
 										Optional: true,
-										Elem:     &schema.Schema{Type: schema.TypeString},
 									},
 								},
 							},
