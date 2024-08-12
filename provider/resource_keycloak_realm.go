@@ -592,7 +592,7 @@ func resourceKeycloakRealm() *schema.Resource {
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"permanent_lockout": { //Permanent Lockout
+									"permanent_lockout": { // Permanent Lockout
 										Type:     schema.TypeBool,
 										Optional: true,
 										Default:  false,
@@ -612,27 +612,27 @@ func resourceKeycloakRealm() *schema.Resource {
 										Optional: true,
 										Default:  30,
 									},
-									"wait_increment_seconds": { //Wait Increment
+									"wait_increment_seconds": { // Wait Increment
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  60,
 									},
-									"quick_login_check_milli_seconds": { //Quick Login Check Milli Seconds
+									"quick_login_check_milli_seconds": { // Quick Login Check Milli Seconds
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  1000,
 									},
-									"minimum_quick_login_wait_seconds": { //Minimum Quick Login Wait
+									"minimum_quick_login_wait_seconds": { // Minimum Quick Login Wait
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  60,
 									},
-									"max_failure_wait_seconds": { //Max Wait
+									"max_failure_wait_seconds": { // Max Wait
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  900,
 									},
-									"failure_reset_time_seconds": { //maxDeltaTimeSeconds
+									"failure_reset_time_seconds": { // maxDeltaTimeSeconds
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  43200,
@@ -860,7 +860,7 @@ func getRealmFromData(data *schema.ResourceData, keycloakVersion *version.Versio
 		DuplicateEmailsAllowed:      data.Get("duplicate_emails_allowed").(bool),
 		SslRequired:                 data.Get("ssl_required").(string),
 
-		//internationalization
+		// internationalization
 		InternationalizationEnabled: internationalizationEnabled,
 		SupportLocales:              supportLocales,
 		DefaultLocale:               defaultLocale,
@@ -1086,7 +1086,7 @@ func getRealmFromData(data *schema.ResourceData, keycloakVersion *version.Versio
 		realm.Oauth2DevicePollingInterval = oauth2DevicePollingInterval.(int)
 	}
 
-	//security defenses
+	// security defenses
 	if v, ok := data.GetOk("security_defenses"); ok {
 		securityDefensesSettings := v.([]interface{})[0].(map[string]interface{})
 
@@ -1190,7 +1190,7 @@ func getRealmFromData(data *schema.ResourceData, keycloakVersion *version.Versio
 		}
 	}
 
-	//WebAuthn
+	// WebAuthn
 	if v, ok := data.GetOk("web_authn_policy"); ok {
 		webAuthnPolicy := v.([]interface{})[0].(map[string]interface{})
 
@@ -1232,7 +1232,7 @@ func getRealmFromData(data *schema.ResourceData, keycloakVersion *version.Versio
 		}
 	}
 
-	//WebAuthn Passwordless
+	// WebAuthn Passwordless
 	if v, ok := data.GetOk("web_authn_passwordless_policy"); ok {
 		webAuthnPasswordlessPolicy := v.([]interface{})[0].(map[string]interface{})
 
@@ -1416,7 +1416,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm, keycloakVers
 	data.Set("oauth2_device_code_lifespan", getDurationStringFromSeconds(realm.Oauth2DeviceCodeLifespan))
 	data.Set("oauth2_device_polling_interval", realm.Oauth2DevicePollingInterval)
 
-	//internationalization
+	// internationalization
 	if realm.InternationalizationEnabled {
 		internationalizationSettings := make(map[string]interface{})
 		internationalizationSettings["supported_locales"] = realm.SupportLocales
@@ -1448,7 +1448,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm, keycloakVers
 
 	data.Set("password_policy", realm.PasswordPolicy)
 
-	//Flow Bindings
+	// Flow Bindings
 	data.Set("browser_flow", realm.BrowserFlow)
 	data.Set("registration_flow", realm.RegistrationFlow)
 	data.Set("direct_grant_flow", realm.DirectGrantFlow)
@@ -1457,7 +1457,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm, keycloakVers
 	data.Set("docker_authentication_flow", realm.DockerAuthenticationFlow)
 	data.Set("first_broker_login_flow", realm.FirstBrokerLoginFlow)
 
-	//WebAuthn
+	// WebAuthn
 	webAuthnPolicy := make(map[string]interface{})
 	webAuthnPolicy["acceptable_aaguids"] = realm.WebAuthnPolicyAcceptableAaguids
 	webAuthnPolicy["extra_origins"] = realm.WebAuthnPolicyExtraOrigins
@@ -1472,7 +1472,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm, keycloakVers
 	webAuthnPolicy["user_verification_requirement"] = realm.WebAuthnPolicyUserVerificationRequirement
 	data.Set("web_authn_policy", []interface{}{webAuthnPolicy})
 
-	//OTP Policy
+	// OTP Policy
 	otpPolicy := make(map[string]interface{})
 	otpPolicy["type"] = realm.OTPPolicyType
 	otpPolicy["algorithm"] = realm.OTPPolicyAlgorithm
@@ -1482,7 +1482,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm, keycloakVers
 	otpPolicy["period"] = realm.OTPPolicyPeriod
 	data.Set("otp_policy", []interface{}{otpPolicy})
 
-	//WebAuthn Passwordless
+	// WebAuthn Passwordless
 	webAuthnPasswordlessPolicy := make(map[string]interface{})
 	webAuthnPasswordlessPolicy["acceptable_aaguids"] = realm.WebAuthnPolicyPasswordlessAcceptableAaguids
 	webAuthnPasswordlessPolicy["extra_origins"] = realm.WebAuthnPolicyPasswordlessExtraOrigins
@@ -1512,7 +1512,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm, keycloakVers
 	if v, ok := data.GetOk("attributes"); ok {
 		for key := range v.(map[string]interface{}) {
 			attributes[key] = realm.Attributes[key]
-			//We are only interested in attributes managed in terraform (Keycloak returns a lot of doubles values in the attributes...)
+			// We are only interested in attributes managed in terraform (Keycloak returns a lot of doubles values in the attributes...)
 		}
 	}
 	data.Set("attributes", attributes)
