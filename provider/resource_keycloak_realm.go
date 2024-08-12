@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -519,37 +520,37 @@ func resourceKeycloakRealm() *schema.Resource {
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"permanent_lockout": { //Permanent Lockout
+									"permanent_lockout": { // Permanent Lockout
 										Type:     schema.TypeBool,
 										Optional: true,
 										Default:  false,
 									},
-									"max_login_failures": { //failureFactor
+									"max_login_failures": { // failureFactor
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  30,
 									},
-									"wait_increment_seconds": { //Wait Increment
+									"wait_increment_seconds": { // Wait Increment
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  60,
 									},
-									"quick_login_check_milli_seconds": { //Quick Login Check Milli Seconds
+									"quick_login_check_milli_seconds": { // Quick Login Check Milli Seconds
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  1000,
 									},
-									"minimum_quick_login_wait_seconds": { //Minimum Quick Login Wait
+									"minimum_quick_login_wait_seconds": { // Minimum Quick Login Wait
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  60,
 									},
-									"max_failure_wait_seconds": { //Max Wait
+									"max_failure_wait_seconds": { // Max Wait
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  900,
 									},
-									"failure_reset_time_seconds": { //maxDeltaTimeSeconds
+									"failure_reset_time_seconds": { // maxDeltaTimeSeconds
 										Type:     schema.TypeInt,
 										Optional: true,
 										Default:  43200,
@@ -757,13 +758,13 @@ func getRealmFromData(data *schema.ResourceData) (*keycloak.Realm, error) {
 		DuplicateEmailsAllowed:      data.Get("duplicate_emails_allowed").(bool),
 		SslRequired:                 data.Get("ssl_required").(string),
 
-		//internationalization
+		// internationalization
 		InternationalizationEnabled: internationalizationEnabled,
 		SupportLocales:              supportLocales,
 		DefaultLocale:               defaultLocale,
 	}
 
-	//smtp
+	// smtp
 	if v, ok := data.GetOk("smtp_server"); ok {
 		smtpSettings := v.([]interface{})[0].(map[string]interface{})
 
@@ -961,7 +962,7 @@ func getRealmFromData(data *schema.ResourceData) (*keycloak.Realm, error) {
 		realm.Oauth2DevicePollingInterval = oauth2DevicePollingInterval.(int)
 	}
 
-	//security defenses
+	// security defenses
 	if v, ok := data.GetOk("security_defenses"); ok {
 		securityDefensesSettings := v.([]interface{})[0].(map[string]interface{})
 
@@ -1032,7 +1033,7 @@ func getRealmFromData(data *schema.ResourceData) (*keycloak.Realm, error) {
 	}
 	realm.DefaultOptionalClientScopes = defaultOptionalClientScopes
 
-	//OTPPolicy
+	// OTPPolicy
 	if v, ok := data.GetOk("otp_policy"); ok {
 		otpPolicy := v.([]interface{})[0].(map[string]interface{})
 
@@ -1061,7 +1062,7 @@ func getRealmFromData(data *schema.ResourceData) (*keycloak.Realm, error) {
 		}
 	}
 
-	//WebAuthn
+	// WebAuthn
 	if v, ok := data.GetOk("web_authn_policy"); ok {
 		webAuthnPolicy := v.([]interface{})[0].(map[string]interface{})
 
@@ -1102,7 +1103,7 @@ func getRealmFromData(data *schema.ResourceData) (*keycloak.Realm, error) {
 		}
 	}
 
-	//WebAuthn Passwordless
+	// WebAuthn Passwordless
 	if v, ok := data.GetOk("web_authn_passwordless_policy"); ok {
 		webAuthnPasswordlessPolicy := v.([]interface{})[0].(map[string]interface{})
 
@@ -1249,7 +1250,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm) {
 	data.Set("oauth2_device_code_lifespan", getDurationStringFromSeconds(realm.Oauth2DeviceCodeLifespan))
 	data.Set("oauth2_device_polling_interval", realm.Oauth2DevicePollingInterval)
 
-	//internationalization
+	// internationalization
 	if realm.InternationalizationEnabled {
 		internationalizationSettings := make(map[string]interface{})
 		internationalizationSettings["supported_locales"] = realm.SupportLocales
@@ -1259,29 +1260,16 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm) {
 		data.Set("internationalization", nil)
 	}
 
-	if v, ok := data.GetOk("security_defenses"); ok {
-		oldHeadersConfig := v.([]interface{})[0].(map[string]interface{})["headers"].([]interface{})
-		if len(oldHeadersConfig) == 0 && !realm.BruteForceProtected {
-			data.Set("security_defenses", nil)
-		} else if len(oldHeadersConfig) == 1 && realm.BruteForceProtected {
-			securityDefensesSettings := make(map[string]interface{})
-			securityDefensesSettings["headers"] = []interface{}{getHeaderSettings(realm)}
-			securityDefensesSettings["brute_force_detection"] = []interface{}{getBruteForceDetectionSettings(realm)}
-			data.Set("security_defenses", []interface{}{securityDefensesSettings})
-		} else if len(oldHeadersConfig) == 1 {
-			securityDefensesSettings := make(map[string]interface{})
-			securityDefensesSettings["headers"] = []interface{}{getHeaderSettings(realm)}
-			data.Set("security_defenses", []interface{}{securityDefensesSettings})
-		} else if realm.BruteForceProtected {
-			securityDefensesSettings := make(map[string]interface{})
-			securityDefensesSettings["brute_force_detection"] = []interface{}{getBruteForceDetectionSettings(realm)}
-			data.Set("security_defenses", []interface{}{securityDefensesSettings})
-		}
+	if realm.BruteForceProtected {
+		securityDefensesSettings := make(map[string]interface{})
+		securityDefensesSettings["headers"] = []interface{}{getHeaderSettings(realm)}
+		securityDefensesSettings["brute_force_detection"] = []interface{}{getBruteForceDetectionSettings(realm)}
+		data.Set("security_defenses", []interface{}{securityDefensesSettings})
 	}
 
 	data.Set("password_policy", realm.PasswordPolicy)
 
-	//Flow Bindings
+	// Flow Bindings
 	data.Set("browser_flow", realm.BrowserFlow)
 	data.Set("registration_flow", realm.RegistrationFlow)
 	data.Set("direct_grant_flow", realm.DirectGrantFlow)
@@ -1289,7 +1277,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm) {
 	data.Set("client_authentication_flow", realm.ClientAuthenticationFlow)
 	data.Set("docker_authentication_flow", realm.DockerAuthenticationFlow)
 
-	//WebAuthn
+	// WebAuthn
 	webAuthnPolicy := make(map[string]interface{})
 	webAuthnPolicy["acceptable_aaguids"] = realm.WebAuthnPolicyAcceptableAaguids
 	webAuthnPolicy["attestation_conveyance_preference"] = realm.WebAuthnPolicyAttestationConveyancePreference
@@ -1303,7 +1291,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm) {
 	webAuthnPolicy["user_verification_requirement"] = realm.WebAuthnPolicyUserVerificationRequirement
 	data.Set("web_authn_policy", []interface{}{webAuthnPolicy})
 
-	//OTP Policy
+	// OTP Policy
 	otpPolicy := make(map[string]interface{})
 	otpPolicy["type"] = realm.OTPPolicyType
 	otpPolicy["algorithm"] = realm.OTPPolicyAlgorithm
@@ -1313,7 +1301,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm) {
 	otpPolicy["period"] = realm.OTPPolicyPeriod
 	data.Set("otp_policy", []interface{}{otpPolicy})
 
-	//WebAuthn Passwordless
+	// WebAuthn Passwordless
 	webAuthnPasswordlessPolicy := make(map[string]interface{})
 	webAuthnPasswordlessPolicy["acceptable_aaguids"] = realm.WebAuthnPolicyPasswordlessAcceptableAaguids
 	webAuthnPasswordlessPolicy["attestation_conveyance_preference"] = realm.WebAuthnPolicyPasswordlessAttestationConveyancePreference
@@ -1331,7 +1319,7 @@ func setRealmData(data *schema.ResourceData, realm *keycloak.Realm) {
 	if v, ok := data.GetOk("attributes"); ok {
 		for key := range v.(map[string]interface{}) {
 			attributes[key] = realm.Attributes[key]
-			//We are only interested in attributes managed in terraform (Keycloak returns a lot of doubles values in the attributes...)
+			// We are only interested in attributes managed in terraform (Keycloak returns a lot of doubles values in the attributes...)
 		}
 	}
 	data.Set("attributes", attributes)
