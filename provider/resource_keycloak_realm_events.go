@@ -94,7 +94,7 @@ func setRealmEventsConfigData(data *schema.ResourceData, realmEventsConfig *keyc
 	data.Set("events_expiration", realmEventsConfig.EventsExpiration)
 	data.Set("events_listeners", realmEventsConfig.EventsListeners)
 
-	if _, ok := data.GetOk("enabled_event_types"); ok {
+	if len(realmEventsConfig.EnabledEventTypes) > 0 {
 		data.Set("enabled_event_types", realmEventsConfig.EnabledEventTypes)
 	}
 }
