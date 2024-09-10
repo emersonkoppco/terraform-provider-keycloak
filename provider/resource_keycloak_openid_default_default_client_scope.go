@@ -71,7 +71,7 @@ func resourceKeycloakOpenidDefaultDefaultClientScopeReconcile(ctx context.Contex
 		if keycloak.ErrorIs404(err) {
 			return diag.FromErr(fmt.Errorf("validation error: realm with id %s does not exist", realmId))
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("validation error: error getting default default client scopes: %s", err.Error()))
 	}
 
 	diagnostics := detachDeletedDefaultScopes(ctx, keycloakOpenidDefaultDefaultScopes, tfOpenidDefaultDefaultScopes, err, keycloakClient, realmId)
@@ -86,7 +86,7 @@ func resourceKeycloakOpenidDefaultDefaultClientScopeReconcile(ctx context.Contex
 		}
 	}
 
-	return waitForDefaultUpdates(ctx, keycloakClient, realmId, tfOpenidDefaultDefaultScopes, 5)
+	return waitForDefaultUpdates(ctx, keycloakClient, realmId, tfOpenidDefaultDefaultScopes, 10)
 }
 
 func waitForDefaultUpdates(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, scopes *schema.Set, times int) diag.Diagnostics {
@@ -98,15 +98,17 @@ func waitForDefaultUpdates(ctx context.Context, keycloakClient *keycloak.Keycloa
 		if keycloak.ErrorIs404(err) {
 			return diag.FromErr(fmt.Errorf("validation error: realm with id %s does not exist", realmId))
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("validation error: error getting default default client scopes: %s", err.Error()))
 	}
 
 	if len(keycloakOpenidDefaultDefaultScopes) != scopes.Len() {
+		fmt.Println("Waiting updates for 1s...")
 		time.Sleep(1 * time.Second)
 		return waitForOptionalUpdates(ctx, keycloakClient, realmId, scopes, times-1)
 	}
 	for _, keycloakOpenidDefaultDefaultScope := range keycloakOpenidDefaultDefaultScopes {
 		if !scopes.Contains(keycloakOpenidDefaultDefaultScope.Name) {
+			fmt.Println("Waiting updates for 1s...")
 			time.Sleep(1 * time.Second)
 			return waitForOptionalUpdates(ctx, keycloakClient, realmId, scopes, times-1)
 		}
