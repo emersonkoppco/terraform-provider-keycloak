@@ -14,12 +14,12 @@ import (
 
 func resourceKeycloakOpenidDefaultDefaultClientScopes() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
+		CreateContext: resourceKeycloakOpenidDefaultDefaultClientScopesReconcile,
 		ReadContext:   resourceKeycloakOpenidDefaultDefaultClientScopesRead,
-		DeleteContext: resourceKeycloakOpenidDefaultDefaultClientScopeDelete,
-		UpdateContext: resourceKeycloakOpenidDefaultDefaultClientScopeReconcile,
+		DeleteContext: resourceKeycloakOpenidDefaultDefaultClientScopesDelete,
+		UpdateContext: resourceKeycloakOpenidDefaultDefaultClientScopesReconcile,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceKeycloakOpenidDefaultDefaultClientScopeImport,
+			StateContext: resourceKeycloakOpenidDefaultDefaultClientScopesImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"realm_id": {
@@ -60,7 +60,7 @@ func resourceKeycloakOpenidDefaultDefaultClientScopesRead(ctx context.Context, d
 	return nil
 }
 
-func resourceKeycloakOpenidDefaultDefaultClientScopeReconcile(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceKeycloakOpenidDefaultDefaultClientScopesReconcile(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	keycloakClient := meta.(*keycloak.KeycloakClient)
 
 	realmId := data.Get("realm_id").(string)
@@ -80,11 +80,13 @@ func resourceKeycloakOpenidDefaultDefaultClientScopeReconcile(ctx context.Contex
 	}
 
 	if len(tfOpenidDefaultDefaultScopes) > 0 {
-		diagnostics = attachNewDefaultScopes(ctx, keycloakClient, realmId, tfOpenidDefaultDefaultScopes)
+		diagnostics = attachNewDefaultScopes(ctx, keycloakOpenidDefaultDefaultScopes, keycloakClient, realmId, tfOpenidDefaultDefaultScopes)
 		if diagnostics != nil {
 			return diagnostics
 		}
 	}
+
+	data.SetId(realmId)
 
 	return waitForDefaultUpdates(ctx, keycloakClient, realmId, tfOpenidDefaultDefaultScopes, 10)
 }
@@ -102,13 +104,11 @@ func waitForDefaultUpdates(ctx context.Context, keycloakClient *keycloak.Keycloa
 	}
 
 	if len(keycloakOpenidDefaultDefaultScopes) != len(scopes) {
-		fmt.Println("Waiting updates for 1s...")
 		time.Sleep(1 * time.Second)
 		return waitForDefaultUpdates(ctx, keycloakClient, realmId, scopes, times-1)
 	}
 	for _, keycloakOpenidDefaultDefaultScope := range keycloakOpenidDefaultDefaultScopes {
 		if !slices.Contains(scopes, keycloakOpenidDefaultDefaultScope.Name) {
-			fmt.Println("Waiting updates for 1s...")
 			time.Sleep(1 * time.Second)
 			return waitForDefaultUpdates(ctx, keycloakClient, realmId, scopes, times-1)
 		}
@@ -128,13 +128,16 @@ func detachDeletedDefaultScopes(ctx context.Context, keycloakOpenidDefaultDefaul
 	return nil
 }
 
-func attachNewDefaultScopes(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, tfOpenidDefaultDefaultScopes []string) diag.Diagnostics {
+func attachNewDefaultScopes(ctx context.Context, keycloakOpenidDefaultDefaultScopes []*keycloak.OpenidClientScope, keycloakClient *keycloak.KeycloakClient, realmId string, tfOpenidDefaultDefaultScopes []string) diag.Diagnostics {
 	keycloakClientScopes, err := keycloakClient.GetRealmClientScopes(ctx, realmId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	for _, keycloakClientScope := range keycloakClientScopes {
-		if slices.Contains(tfOpenidDefaultDefaultScopes, keycloakClientScope.Name) {
+		if slices.Contains(tfOpenidDefaultDefaultScopes, keycloakClientScope.Name) &&
+			!slices.ContainsFunc(keycloakOpenidDefaultDefaultScopes, func(e *keycloak.OpenidClientScope) bool {
+				return e.Id == keycloakClientScope.Id
+			}) {
 			err = keycloakClient.PutOpenidRealmDefaultDefaultClientScope(ctx, realmId, keycloakClientScope.Id)
 			if err != nil {
 				return diag.FromErr(err)
@@ -144,7 +147,7 @@ func attachNewDefaultScopes(ctx context.Context, keycloakClient *keycloak.Keyclo
 	return nil
 }
 
-func resourceKeycloakOpenidDefaultDefaultClientScopeDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceKeycloakOpenidDefaultDefaultClientScopesDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	keycloakClient := meta.(*keycloak.KeycloakClient)
 
 	realmId := data.Get("realm_id").(string)
@@ -166,7 +169,7 @@ func resourceKeycloakOpenidDefaultDefaultClientScopeDelete(ctx context.Context, 
 	return nil
 }
 
-func resourceKeycloakOpenidDefaultDefaultClientScopeImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceKeycloakOpenidDefaultDefaultClientScopesImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	keycloakClient := meta.(*keycloak.KeycloakClient)
 
 	_, err := keycloakClient.GetRealmDefaultClientScopes(ctx, data.Id())

@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mrparkers/terraform-provider-keycloak/keycloak"
@@ -86,10 +85,8 @@ func resourceKeycloakOpenidClientDefaultScopesReconcile(ctx context.Context, dat
 		return diag.FromErr(err)
 	}
 
-	var openidClientDefaultScopesToLog []string
 	var openidClientDefaultScopesToDetach []string
 	for _, keycloakOpenidClientDefaultScope := range keycloakOpenidClientDefaultScopes {
-		openidClientDefaultScopesToLog = append(openidClientDefaultScopesToLog, keycloakOpenidClientDefaultScope.Name)
 		// if this scope is attached in keycloak and tf state, no update is required
 		// remove it from the set so we can look at scopes that need to be attached later
 		if slices.Contains(tfOpenidClientDefaultScopes, keycloakOpenidClientDefaultScope.Name) {
@@ -101,12 +98,6 @@ func resourceKeycloakOpenidClientDefaultScopesReconcile(ctx context.Context, dat
 			openidClientDefaultScopesToDetach = append(openidClientDefaultScopesToDetach, keycloakOpenidClientDefaultScope.Name)
 		}
 	}
-
-	tflog.Info(ctx, "Reconciling scopes", map[string]any{
-		"existing":  openidClientDefaultScopesToLog,
-		"attaching": tfOpenidClientDefaultScopes,
-		"detaching": openidClientDefaultScopesToDetach,
-	})
 
 	// detach scopes that aren't in tf state
 	err = keycloakClient.DetachOpenidClientDefaultScopes(ctx, realmId, clientId, openidClientDefaultScopesToDetach)
