@@ -28,10 +28,9 @@ func resourceKeycloakOpenidDefaultDefaultClientScopes() *schema.Resource {
 				ForceNew: true,
 			},
 			"default_scopes": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Required: true,
-				Set:      schema.HashString,
 			},
 		},
 	}
