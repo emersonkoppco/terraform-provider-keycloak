@@ -75,7 +75,7 @@ func resourceKeycloakOpenidClientDefaultScopesReconcile(ctx context.Context, dat
 
 	realmId := data.Get("realm_id").(string)
 	clientId := data.Get("client_id").(string)
-	tfOpenidClientDefaultScopes := data.Get("default_scopes").([]string)
+	tfOpenidClientDefaultScopes := interfaceSliceToStringSlice(data.Get("default_scopes").([]any))
 
 	keycloakOpenidClientDefaultScopes, err := keycloakClient.GetOpenidClientDefaultScopes(ctx, realmId, clientId)
 	if err != nil {
@@ -121,7 +121,7 @@ func resourceKeycloakOpenidClientDefaultScopesDelete(ctx context.Context, data *
 
 	realmId := data.Get("realm_id").(string)
 	clientId := data.Get("client_id").(string)
-	defaultScopes := data.Get("default_scopes").([]string)
+	defaultScopes := interfaceSliceToStringSlice(data.Get("default_scopes").([]any))
 
 	return diag.FromErr(keycloakClient.DetachOpenidClientDefaultScopes(ctx, realmId, clientId, defaultScopes))
 }
