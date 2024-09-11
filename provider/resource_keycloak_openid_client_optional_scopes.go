@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mrparkers/terraform-provider-keycloak/keycloak"
@@ -85,12 +86,14 @@ func resourceKeycloakOpenidClientOptionalScopesReconcile(ctx context.Context, da
 		return diag.FromErr(err)
 	}
 
+	var openidClientOptionalScopesToLog []string
 	var openidClientOptionalScopesToDetach []string
 	for _, keycloakOpenidClientOptionalScope := range keycloakOpenidClientOptionalScopes {
+		openidClientOptionalScopesToLog = append(openidClientOptionalScopesToLog, keycloakOpenidClientOptionalScope.Name)
 		// if this scope is attached in keycloak and tf state, no update is required
 		// remove it from the set so we can look at scopes that need to be attached later
 		if slices.Contains(tfOpenidClientOptionalScopes, keycloakOpenidClientOptionalScope.Name) {
-			slices.DeleteFunc(tfOpenidClientOptionalScopes, func(e string) bool {
+			tfOpenidClientOptionalScopes = slices.DeleteFunc(tfOpenidClientOptionalScopes, func(e string) bool {
 				return e == keycloakOpenidClientOptionalScope.Name
 			})
 		} else {
@@ -98,6 +101,12 @@ func resourceKeycloakOpenidClientOptionalScopesReconcile(ctx context.Context, da
 			openidClientOptionalScopesToDetach = append(openidClientOptionalScopesToDetach, keycloakOpenidClientOptionalScope.Name)
 		}
 	}
+
+	tflog.Info(ctx, "Reconciling scopes", map[string]any{
+		"existing":  openidClientOptionalScopesToLog,
+		"attaching": tfOpenidClientOptionalScopes,
+		"detaching": openidClientOptionalScopesToDetach,
+	})
 
 	// detach scopes that aren't in tf state
 	err = keycloakClient.DetachOpenidClientOptionalScopes(ctx, realmId, clientId, openidClientOptionalScopesToDetach)
