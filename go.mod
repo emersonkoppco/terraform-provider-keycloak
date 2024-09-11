@@ -1,5 +1,7 @@
 module github.com/mrparkers/terraform-provider-keycloak
 
+go 1.23
+
 require (
 	github.com/hashicorp/errwrap v1.0.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
@@ -53,5 +55,3 @@ require (
 	google.golang.org/grpc v1.56.3 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
-
-go 1.19
