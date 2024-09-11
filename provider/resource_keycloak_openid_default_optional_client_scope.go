@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -27,10 +28,9 @@ func resourceKeycloakOpenidDefaultOptionalClientScopes() *schema.Resource {
 				ForceNew: true,
 			},
 			"optional_scopes": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Required: true,
-				Set:      schema.HashString,
 			},
 		},
 	}
@@ -64,7 +64,7 @@ func resourceKeycloakOpenidDefaultOptionalClientScopeReconcile(ctx context.Conte
 	keycloakClient := meta.(*keycloak.KeycloakClient)
 
 	realmId := data.Get("realm_id").(string)
-	tfOpenidDefaultOptionalScopes := data.Get("optional_scopes").(*schema.Set)
+	tfOpenidDefaultOptionalScopes := data.Get("optional_scopes").([]string)
 
 	keycloakOpenidDefaultOptionalScopes, err := keycloakClient.GetOpenidRealmDefaultOptionalClientScopes(ctx, realmId)
 	if err != nil {
@@ -79,14 +79,14 @@ func resourceKeycloakOpenidDefaultOptionalClientScopeReconcile(ctx context.Conte
 		return diagnostics
 	}
 
-	if tfOpenidDefaultOptionalScopes.Len() > 0 {
+	if len(tfOpenidDefaultOptionalScopes) > 0 {
 		return attachNewOptionalScopes(ctx, keycloakClient, realmId, tfOpenidDefaultOptionalScopes)
 	}
 
 	return waitForOptionalUpdates(ctx, keycloakClient, realmId, tfOpenidDefaultOptionalScopes, 5)
 }
 
-func waitForOptionalUpdates(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, scopes *schema.Set, times int) diag.Diagnostics {
+func waitForOptionalUpdates(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, scopes []string, times int) diag.Diagnostics {
 	if times == 0 {
 		return nil
 	}
@@ -98,12 +98,12 @@ func waitForOptionalUpdates(ctx context.Context, keycloakClient *keycloak.Keyclo
 		return diag.FromErr(err)
 	}
 
-	if len(keycloakOpenidDefaultOptionalScopes) != scopes.Len() {
+	if len(keycloakOpenidDefaultOptionalScopes) != len(scopes) {
 		time.Sleep(1 * time.Second)
 		return waitForOptionalUpdates(ctx, keycloakClient, realmId, scopes, times-1)
 	}
 	for _, keycloakOpenidDefaultOptionalScope := range keycloakOpenidDefaultOptionalScopes {
-		if !scopes.Contains(keycloakOpenidDefaultOptionalScope.Name) {
+		if !slices.Contains(scopes, keycloakOpenidDefaultOptionalScope.Name) {
 			time.Sleep(1 * time.Second)
 			return waitForOptionalUpdates(ctx, keycloakClient, realmId, scopes, times-1)
 		}
@@ -111,9 +111,9 @@ func waitForOptionalUpdates(ctx context.Context, keycloakClient *keycloak.Keyclo
 	return nil
 }
 
-func detachDeletedOptionalScopes(ctx context.Context, keycloakOpenidDefaultOptionalScopes []*keycloak.OpenidClientScope, tfOpenidDefaultOptionalScopes *schema.Set, err error, keycloakClient *keycloak.KeycloakClient, realmId string) diag.Diagnostics {
+func detachDeletedOptionalScopes(ctx context.Context, keycloakOpenidDefaultOptionalScopes []*keycloak.OpenidClientScope, tfOpenidDefaultOptionalScopes []string, err error, keycloakClient *keycloak.KeycloakClient, realmId string) diag.Diagnostics {
 	for _, keycloakOpenidDefaultOptionalScope := range keycloakOpenidDefaultOptionalScopes {
-		if !tfOpenidDefaultOptionalScopes.Contains(keycloakOpenidDefaultOptionalScope.Name) {
+		if !slices.Contains(tfOpenidDefaultOptionalScopes, keycloakOpenidDefaultOptionalScope.Name) {
 			err = keycloakClient.DeleteOpenidRealmDefaultOptionalClientScope(ctx, realmId, keycloakOpenidDefaultOptionalScope.Id)
 			if err != nil {
 				return diag.FromErr(err)
@@ -123,13 +123,13 @@ func detachDeletedOptionalScopes(ctx context.Context, keycloakOpenidDefaultOptio
 	return nil
 }
 
-func attachNewOptionalScopes(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, tfOpenidDefaultOptionalScopes *schema.Set) diag.Diagnostics {
+func attachNewOptionalScopes(ctx context.Context, keycloakClient *keycloak.KeycloakClient, realmId string, tfOpenidDefaultOptionalScopes []string) diag.Diagnostics {
 	keycloakClientScopes, err := keycloakClient.GetRealmClientScopes(ctx, realmId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	for _, keycloakClientScope := range keycloakClientScopes {
-		if tfOpenidDefaultOptionalScopes.Contains(keycloakClientScope.Name) {
+		if slices.Contains(tfOpenidDefaultOptionalScopes, keycloakClientScope.Name) {
 			err = keycloakClient.PutOpenidRealmDefaultOptionalClientScope(ctx, realmId, keycloakClientScope.Id)
 			if err != nil {
 				return diag.FromErr(err)
