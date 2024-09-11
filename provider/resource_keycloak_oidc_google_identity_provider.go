@@ -36,24 +36,24 @@ func resourceKeycloakOidcGoogleIdentityProvider() *schema.Resource {
 			Sensitive:   true,
 			Description: "Client Secret.",
 		},
-		"hosted_domain": { //hostedDomain
+		"hosted_domain": { // hostedDomain
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Set 'hd' query parameter when logging in with Google. Google will list accounts only for this domain. Keycloak validates that the returned identity token has a claim for this domain. When '*' is entered, any hosted account can be used.",
 		},
-		"use_user_ip_param": { //userIp
+		"use_user_ip_param": { // userIp
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
 			Description: "Set 'userIp' query parameter when invoking on Google's User Info service.  This will use the user's ip address.  Useful if Google is throttling access to the User Info service.",
 		},
-		"request_refresh_token": { //offlineAccess
+		"request_refresh_token": { // offlineAccess
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
 			Description: "Set 'access_type' query parameter to 'offline' when redirecting to google authorization endpoint, to get a refresh token back. Useful if planning to use Token Exchange to retrieve Google token to access Google APIs when the user is not at the browser.",
 		},
-		"default_scopes": { //defaultScope
+		"default_scopes": { // defaultScope
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "openid profile email",
@@ -65,7 +65,7 @@ func resourceKeycloakOidcGoogleIdentityProvider() *schema.Resource {
 			Default:     false,
 			Description: "This is just used together with Identity Provider Authenticator or when kc_idp_hint points to this identity provider. In case that client sends a request with prompt=none and user is not yet authenticated, the error will not be directly returned to client, but the request with prompt=none will be forwarded to this identity provider.",
 		},
-		"disable_user_info": { //disableUserInfo
+		"disable_user_info": { // disableUserInfo
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,

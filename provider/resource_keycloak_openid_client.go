@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/imdario/mergo"
-	"github.com/mrparkers/terraform-provider-keycloak/keycloak/types"
 	"reflect"
 	"strings"
+
+	"github.com/imdario/mergo"
+	"github.com/mrparkers/terraform-provider-keycloak/keycloak/types"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
