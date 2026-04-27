@@ -542,7 +542,7 @@ func resourceKeycloakRealmUserProfileImport(ctx context.Context, data *schema.Re
 		return nil, err
 	}
 
-	setRealmUserProfileData(data, realmUserProfile)
+	setRealmUserProfileData(ctx, keycloakClient, data, realmUserProfile)
 
 	return []*schema.ResourceData{data}, nil
 }

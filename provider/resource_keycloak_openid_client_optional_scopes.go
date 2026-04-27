@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -33,9 +32,10 @@ func resourceKeycloakOpenidClientOptionalScopes() *schema.Resource {
 				ForceNew: true,
 			},
 			"optional_scopes": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Required: true,
+				Set:      schema.HashString,
 			},
 		},
 	}
@@ -61,10 +61,7 @@ func resourceKeycloakOpenidClientOptionalScopesRead(ctx context.Context, data *s
 		optionalScopes = append(optionalScopes, clientScope.Name)
 	}
 
-	err = data.Set("optional_scopes", optionalScopes)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	data.Set("optional_scopes", optionalScopes)
 	data.SetId(openidClientOptionalScopesId(realmId, clientId))
 
 	return nil
@@ -75,7 +72,7 @@ func resourceKeycloakOpenidClientOptionalScopesReconcile(ctx context.Context, da
 
 	realmId := data.Get("realm_id").(string)
 	clientId := data.Get("client_id").(string)
-	tfOpenidClientOptionalScopes := interfaceSliceToStringSlice(data.Get("optional_scopes").([]any))
+	tfOpenidClientOptionalScopes := data.Get("optional_scopes").(*schema.Set)
 
 	keycloakOpenidClientOptionalScopes, err := keycloakClient.GetOpenidClientOptionalScopes(ctx, realmId, clientId)
 	if err != nil {
@@ -89,10 +86,8 @@ func resourceKeycloakOpenidClientOptionalScopesReconcile(ctx context.Context, da
 	for _, keycloakOpenidClientOptionalScope := range keycloakOpenidClientOptionalScopes {
 		// if this scope is attached in keycloak and tf state, no update is required
 		// remove it from the set so we can look at scopes that need to be attached later
-		if slices.Contains(tfOpenidClientOptionalScopes, keycloakOpenidClientOptionalScope.Name) {
-			tfOpenidClientOptionalScopes = slices.DeleteFunc(tfOpenidClientOptionalScopes, func(e string) bool {
-				return e == keycloakOpenidClientOptionalScope.Name
-			})
+		if tfOpenidClientOptionalScopes.Contains(keycloakOpenidClientOptionalScope.Name) {
+			tfOpenidClientOptionalScopes.Remove(keycloakOpenidClientOptionalScope.Name)
 		} else {
 			// if this scope is attached in keycloak but not in tf state, add them to a slice containing all scopes to detach
 			openidClientOptionalScopesToDetach = append(openidClientOptionalScopesToDetach, keycloakOpenidClientOptionalScope.Name)
@@ -106,7 +101,7 @@ func resourceKeycloakOpenidClientOptionalScopesReconcile(ctx context.Context, da
 	}
 
 	// attach scopes that exist in tf state but not in keycloak
-	err = keycloakClient.AttachOpenidClientOptionalScopes(ctx, realmId, clientId, tfOpenidClientOptionalScopes)
+	err = keycloakClient.AttachOpenidClientOptionalScopes(ctx, realmId, clientId, interfaceSliceToStringSlice(tfOpenidClientOptionalScopes.List()))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -121,9 +116,9 @@ func resourceKeycloakOpenidClientOptionalScopesDelete(ctx context.Context, data 
 
 	realmId := data.Get("realm_id").(string)
 	clientId := data.Get("client_id").(string)
-	optionalScopes := interfaceSliceToStringSlice(data.Get("optional_scopes").([]any))
+	optionalScopes := data.Get("optional_scopes").(*schema.Set)
 
-	return diag.FromErr(keycloakClient.DetachOpenidClientOptionalScopes(ctx, realmId, clientId, optionalScopes))
+	return diag.FromErr(keycloakClient.DetachOpenidClientOptionalScopes(ctx, realmId, clientId, interfaceSliceToStringSlice(optionalScopes.List())))
 }
 
 func resourceKeycloakOpenidClientOptionalScopesImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

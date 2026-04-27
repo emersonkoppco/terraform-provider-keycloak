@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -33,9 +32,10 @@ func resourceKeycloakOpenidClientDefaultScopes() *schema.Resource {
 				ForceNew: true,
 			},
 			"default_scopes": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Required: true,
+				Set:      schema.HashString,
 			},
 		},
 	}
@@ -61,10 +61,7 @@ func resourceKeycloakOpenidClientDefaultScopesRead(ctx context.Context, data *sc
 		defaultScopes = append(defaultScopes, clientScope.Name)
 	}
 
-	err = data.Set("default_scopes", defaultScopes)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	data.Set("default_scopes", defaultScopes)
 	data.SetId(openidClientDefaultScopesId(realmId, clientId))
 
 	return nil
@@ -75,7 +72,7 @@ func resourceKeycloakOpenidClientDefaultScopesReconcile(ctx context.Context, dat
 
 	realmId := data.Get("realm_id").(string)
 	clientId := data.Get("client_id").(string)
-	tfOpenidClientDefaultScopes := interfaceSliceToStringSlice(data.Get("default_scopes").([]any))
+	tfOpenidClientDefaultScopes := data.Get("default_scopes").(*schema.Set)
 
 	keycloakOpenidClientDefaultScopes, err := keycloakClient.GetOpenidClientDefaultScopes(ctx, realmId, clientId)
 	if err != nil {
@@ -89,10 +86,8 @@ func resourceKeycloakOpenidClientDefaultScopesReconcile(ctx context.Context, dat
 	for _, keycloakOpenidClientDefaultScope := range keycloakOpenidClientDefaultScopes {
 		// if this scope is attached in keycloak and tf state, no update is required
 		// remove it from the set so we can look at scopes that need to be attached later
-		if slices.Contains(tfOpenidClientDefaultScopes, keycloakOpenidClientDefaultScope.Name) {
-			tfOpenidClientDefaultScopes = slices.DeleteFunc(tfOpenidClientDefaultScopes, func(e string) bool {
-				return e == keycloakOpenidClientDefaultScope.Name
-			})
+		if tfOpenidClientDefaultScopes.Contains(keycloakOpenidClientDefaultScope.Name) {
+			tfOpenidClientDefaultScopes.Remove(keycloakOpenidClientDefaultScope.Name)
 		} else {
 			// if this scope is attached in keycloak but not in tf state, add them to a slice containing all scopes to detach
 			openidClientDefaultScopesToDetach = append(openidClientDefaultScopesToDetach, keycloakOpenidClientDefaultScope.Name)
@@ -106,7 +101,7 @@ func resourceKeycloakOpenidClientDefaultScopesReconcile(ctx context.Context, dat
 	}
 
 	// attach scopes that exist in tf state but not in keycloak
-	err = keycloakClient.AttachOpenidClientDefaultScopes(ctx, realmId, clientId, tfOpenidClientDefaultScopes)
+	err = keycloakClient.AttachOpenidClientDefaultScopes(ctx, realmId, clientId, interfaceSliceToStringSlice(tfOpenidClientDefaultScopes.List()))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -121,9 +116,9 @@ func resourceKeycloakOpenidClientDefaultScopesDelete(ctx context.Context, data *
 
 	realmId := data.Get("realm_id").(string)
 	clientId := data.Get("client_id").(string)
-	defaultScopes := interfaceSliceToStringSlice(data.Get("default_scopes").([]any))
+	defaultScopes := data.Get("default_scopes").(*schema.Set)
 
-	return diag.FromErr(keycloakClient.DetachOpenidClientDefaultScopes(ctx, realmId, clientId, defaultScopes))
+	return diag.FromErr(keycloakClient.DetachOpenidClientDefaultScopes(ctx, realmId, clientId, interfaceSliceToStringSlice(defaultScopes.List())))
 }
 
 func resourceKeycloakOpenidClientDefaultScopesImport(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
