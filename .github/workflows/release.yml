@@ -44,6 +44,16 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+
+      - name: Configure GPG agent for non-interactive signing
+        run: |
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
+          echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+          chmod 600 ~/.gnupg/gpg.conf ~/.gnupg/gpg-agent.conf
+          gpgconf --kill gpg-agent
+
       - name: Import GPG key
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # version v7.0.0
@@ -67,14 +77,6 @@ jobs:
           echo "[Release Notes](https://github.com/keycloak/terraform-provider-keycloak/blob/main/CHANGELOG.md#${releaseVersion}-${releaseDate})" > ${tmp}/release-notes.md
           cat ${tmp}/release-notes.md
           echo "name=NOTES::${tmp}/release-notes.md" >> $GITHUB_OUTPUT
-
-      - name: Configure GPG agent for non-interactive signing
-        run: |
-          mkdir -p ~/.gnupg
-          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
-          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-          gpgconf --kill gpg-agent
-          gpgconf --launch gpg-agent
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8 # version v7.2.1
